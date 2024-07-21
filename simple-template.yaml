@@ -127,7 +127,7 @@ Resources:
         EnvironmentVariables:
           - Name: 'MY_SECRET'
             Type: 'SECRETS_MANAGER'
-            Value: 'valid-secret-name'  # ここを適切なシークレット名に変更
+            Value: 'flask_ecs_test'  # ここを適切なシークレット名に変更
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Description: 'CodeBuild project for building the application'
 

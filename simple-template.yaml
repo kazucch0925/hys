@@ -15,6 +15,13 @@ Parameters:
     Description: "AWS Account ID"
 
 Resources:
+  # S3バケットの作成
+  ArtifactBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'codepipeline-ap-northeast-1-artifacts'
+
+  # CodePipeline IAM Role
   CodePipelineRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -97,7 +104,7 @@ Resources:
       RoleArn: !GetAtt [CodePipelineRole, Arn]
       ArtifactStore:
         Type: S3
-        Location: 'codepipeline-ap-northeast-1-artifacts'
+        Location: !Ref ArtifactBucket
       Stages:
         - Name: Source
           Actions:

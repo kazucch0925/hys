@@ -148,7 +148,7 @@ Resources:
         EnvironmentVariables:
           - Name: GITHUB_TOKEN
             Type: SECRETS_MANAGER
-            Value: 'arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test-E5CTpe'
+            ValueFrom: 'arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test-E5CTpe'
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Description: 'CodeBuild project for building the application'
 

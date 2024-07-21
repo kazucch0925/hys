@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  This template creates a CodePipeline pipeline with a source stage
+  (GitHub), a build stage (CodeBuild), and a deploy stage (ECS).
+
+Parameters:
+  GitHubUserName:
+    Type: String
+    Description: "GitHub username"
+  GitHubOAuthToken:
+    Type: String
+    Description: "GitHub OAuth token"
+  AccountID:
+    Type: String
+    Description: "AWS Account ID"
+
+Resources:
+  CodePipelineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'codepipeline.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'CodePipelinePolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 'iam:PassRole'
+                Resource: '*'
+              - Effect: 'Allow'
+                Action: 
+                  - 'codebuild:StartBuild'
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:BatchGetBuildBatches'
+                  - 'codebuild:StartBuildBatch'
+                Resource: '*'
+              - Effect: 'Allow'
+                Action: 'codestar-connections:UseConnection'
+                Resource: '*'
+              - Effect: 'Allow'
+                Action: 
+                  - 'ecs:UpdateService'
+                  - 'ecs:RegisterTaskDefinition'
+                Resource: '*'
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'codebuild.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'CodeBuildPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Resource: 
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test'
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test:*'
+                Action: 
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+              - Effect: 'Allow'
+                Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
+                Action: 
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+              - Effect: 'Allow'
+                Action: 
+                  - 'codebuild:CreateReportGroup'
+                  - 'codebuild:CreateReport'
+                  - 'codebuild:UpdateReport'
+                  - 'codebuild:BatchPutTestCases'
+                  - 'codebuild:BatchPutCodeCoverages'
+                Resource: 
+                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/flask_ecs_test-*'
+  MyPipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      Name: 'pipeline_sample'
+      RoleArn: !GetAtt [CodePipelineRole, Arn]
+      ArtifactStore:
+        Type: S3
+        Location: 'codepipeline-ap-northeast-1-artifacts'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                Owner: !Ref GitHubUserName
+                Repo: 'flask_ecs_test'
+                Branch: 'master'
+                OAuthToken: !Ref GitHubOAuthToken
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ProjectName: 'cloudformation_sample'
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: DeployAction
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: ECS
+                Version: 1
+              InputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ClusterName: 'sample-ecs-cluster'
+                ServiceName: 'test-service'
+              RunOrder: 1
+
+Outputs:
+  PipelineName:
+    Description: "The name of the CodePipeline pipeline"
+    Value: !Ref MyPipeline

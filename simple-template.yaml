@@ -1,24 +1,24 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: >-
-  This template creates a CodePipeline pipeline with a source stage
-  (GitHub), a build stage (CodeBuild), and a deploy stage (ECS).
+Description: >
+  This template creates a CodePipeline pipeline with a source stage (CodeCommit), a build stage (CodeBuild), and a deploy stage (ECS).
 
 Parameters:
   GitHubUserName:
     Type: String
     Description: "GitHub username"
+  GitHubOAuthToken:
+    Type: String
+    Description: "GitHub OAuth token"
   AccountID:
     Type: String
     Description: "AWS Account ID"
 
 Resources:
-  # S3バケットの作成
   ArtifactBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: 'codepipeline-ap-northeast-1-artifacts'
 
-  # CodePipeline IAM Role
   CodePipelineRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -36,8 +36,7 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action:
-                  - 'iam:PassRole'
+                Action: 'iam:PassRole'
                 Resource: '*'
               - Effect: 'Allow'
                 Action:
@@ -54,16 +53,7 @@ Resources:
                   - 'ecs:UpdateService'
                   - 'ecs:RegisterTaskDefinition'
                 Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 's3:GetObject'
-                  - 's3:PutObject'
-                  - 's3:ListBucket'
-                Resource: 
-                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-artifacts'
-                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-artifacts/*'
 
-  # CodeBuild IAM Role
   CodeBuildRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -81,48 +71,30 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Resource: 
+                Resource:
                   - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*'
                   - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*:*'
-                Action: 
+                Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-                  - 'logs:DescribeLogStreams'
-                  - 'logs:GetLogEvents'
               - Effect: 'Allow'
                 Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
-                Action: 
+                Action:
                   - 's3:PutObject'
                   - 's3:GetObject'
                   - 's3:GetObjectVersion'
                   - 's3:GetBucketAcl'
                   - 's3:GetBucketLocation'
               - Effect: 'Allow'
-                Action: 
+                Action:
                   - 'codebuild:CreateReportGroup'
                   - 'codebuild:CreateReport'
                   - 'codebuild:UpdateReport'
                   - 'codebuild:BatchPutTestCases'
                   - 'codebuild:BatchPutCodeCoverages'
-                Resource: 
+                Resource:
                   - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/*'
-
-  # CodeBuildプロジェクトの定義
-  CodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
-    Properties: 
-      Name: 'cloudformation_sample'
-      Source: 
-        Type: 'CODEPIPELINE'
-      Artifacts: 
-        Type: 'CODEPIPELINE'
-      Environment: 
-        ComputeType: 'BUILD_GENERAL1_SMALL'
-        Image: 'aws/codebuild/standard:4.0'
-        Type: 'LINUX_CONTAINER'
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Description: 'CodeBuild project for building the application'
 
   MyPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
@@ -138,16 +110,14 @@ Resources:
             - Name: SourceAction
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
-                Provider: GitHub
+                Owner: AWS
+                Provider: CodeCommit
                 Version: 1
               OutputArtifacts:
                 - Name: SourceArtifact
               Configuration:
-                Owner: !Ref GitHubUserName
-                Repo: 'flask_ecs_test'
-                Branch: 'master'
-                OAuthToken: !Sub '{{resolve:secretsmanager:my-github-token:SecretString:GitHubOAuthToken}}'
+                RepositoryName: 'my-todo-app-repo'
+                BranchName: 'master'
               RunOrder: 1
         - Name: Build
           Actions:

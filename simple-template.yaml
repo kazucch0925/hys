@@ -7,9 +7,6 @@ Parameters:
   GitHubUserName:
     Type: String
     Description: "GitHub username"
-  GitHubOAuthToken:
-    Type: String
-    Description: "GitHub OAuth token"
   AccountID:
     Type: String
     Description: "AWS Account ID"
@@ -150,7 +147,7 @@ Resources:
                 Owner: !Ref GitHubUserName
                 Repo: 'flask_ecs_test'
                 Branch: 'master'
-                OAuthToken: !Ref GitHubOAuthToken
+                OAuthToken: !Sub '{{resolve:secretsmanager:my-github-token:SecretString:GitHubOAuthToken}}'
               RunOrder: 1
         - Name: Build
           Actions:

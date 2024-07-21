@@ -124,6 +124,10 @@ Resources:
         ComputeType: 'BUILD_GENERAL1_SMALL'
         Image: 'aws/codebuild/standard:4.0'
         Type: 'LINUX_CONTAINER'
+        EnvironmentVariables:
+          - Name: 'MY_SECRET'
+            Type: 'SECRETS_MANAGER'
+            Value: 'valid-secret-name'  # ここを適切なシークレット名に変更
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Description: 'CodeBuild project for building the application'
 

@@ -85,8 +85,8 @@ Resources:
             Statement:
               - Effect: 'Allow'
                 Resource: 
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test'
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test:*'
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*'
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*:*'
                 Action: 
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
@@ -109,7 +109,7 @@ Resources:
                   - 'codebuild:BatchPutTestCases'
                   - 'codebuild:BatchPutCodeCoverages'
                 Resource: 
-                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/flask_ecs_test-*'
+                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/*'
 
   # CodeBuildプロジェクトの定義
   CodeBuildProject:

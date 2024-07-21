@@ -9,7 +9,7 @@ Parameters:
     Description: "AWS Account ID"
 
 Resources:
-  # S3バケットの作成
+  # S3�o�P�b�g�̍쐬
   ArtifactBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -105,7 +105,7 @@ Resources:
                 Resource: 
                   - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/*'
 
-  # CodeBuildプロジェクトの定義
+  # CodeBuild�v���W�F�N�g�̒�`
   CodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties: 

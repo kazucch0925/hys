@@ -109,10 +109,24 @@ Resources:
       Artifacts:
         Type: CODEPIPELINE
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: 'aws/codebuild/standard:4.0'
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: 'aws/codebuild/standard:7.0'
         Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: IMAGE_REPO_NAME
+            Value: 'flask_ecs_test'
+            Type: PLAINTEXT
+          - Name: AWS_DEFAULT_REGION
+            Value: 'ap-northeast-1'
+            Type: PLAINTEXT
+          - Name: CONTAINER_NAME
+            Value: 'myapp'
+            Type: PLAINTEXT
+          - Name: AWS_ACCOUNT_ID
+            Value: '381491863936'
+            Type: PLAINTEXT
       ServiceRole: !GetAtt [CodeBuildRole, Arn]
+      TimeoutInMinutes: 45
 
   MyPipeline:
     Type: 'AWS::CodePipeline::Pipeline'

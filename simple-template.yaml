@@ -72,6 +72,11 @@ Resources:
                   - 'codecommit:GetUploadArchiveStatus'
                 Resource: 
                   - !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
+              - Effect: 'Allow'
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
+                Resource: '*'
 
   # CodeBuild IAM Role
   CodeBuildRole:
@@ -129,6 +134,7 @@ Resources:
               - Effect: 'Allow'
                 Action:
                   - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
                 Resource: 
                   - 'arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test-E5CTpe'
 

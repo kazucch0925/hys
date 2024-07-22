@@ -118,9 +118,9 @@ Resources:
         Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
           - Name: DOCKERHUB_USER
-            Value: "DOCKERHUB_USERNAME"
+            ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test:username::"
           - Name: DOCKERHUB_PASS
-            Value: "DOCKERHUB_PASSWORD"
+            ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test:password::"
       ServiceRole: !GetAtt CodeBuildRole.Arn
 
   MyPipeline:

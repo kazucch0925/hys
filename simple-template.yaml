@@ -113,6 +113,12 @@ Resources:
                   - 'secretsmanager:DescribeSecret'
                 Resource: 
                   - !Sub 'arn:aws:secretsmanager:ap-northeast-1:${AccountID}:secret:flask_ecs_test'
+              - Effect: 'Allow'
+                Action:
+                  - 'logs:CreateLogStream'
+                Resource:
+                  - 'arn:aws:logs:ap-northeast-1:381491863936:log-group:/aws/codebuild/*'
+
         - PolicyName: 'AmazonEC2ContainerRegistryPowerUser'
           PolicyDocument:
             Version: '2012-10-17'

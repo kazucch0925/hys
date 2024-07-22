@@ -57,8 +57,7 @@ Resources:
                   - 'codecommit:GitPull'
                   - 'codecommit:GetBranch'
                   - 'codecommit:GetCommit'
-                Resource: arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo
-
+                Resource: !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
 
   CodeBuildRole:
     Type: 'AWS::IAM::Role'
@@ -77,41 +76,21 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Resource: 
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test'
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test:*'
-                Action: 
+                Action:
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-              - Effect: 'Allow'
-                Resource: 
-                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/flask_ecs_test-*'
-                Action: 
-                  - 'codebuild:CreateReportGroup'
-                  - 'codebuild:CreateReport'
-                  - 'codebuild:UpdateReport'
-                  - 'codebuild:BatchPutTestCases'
-                  - 'codebuild:BatchPutCodeCoverages'
-              - Effect: 'Allow'
-                Action: 
-                  - 's3:PutObject'
-                  - 's3:GetObject'
-                  - 's3:GetObjectVersion'
-                  - 's3:GetBucketAcl'
-                  - 's3:GetBucketLocation'
-                Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
+                Resource: 'arn:aws:logs:*:*:*'
               - Effect: 'Allow'
                 Action:
-                  - 'codecommit:GitPull'
-                  - 'codecommit:GetRepository'
-                  - 'codecommit:GetBranch'
-                  - 'codecommit:UploadArchive'
-                  - 'codecommit:CancelUploadArchive'
-                  - 'codecommit:CompleteUploadArchive'
-                  - 'codecommit:GetUploadArchiveStatus'
-                Resource: 
-                  - !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
+                  - 's3:*'
+                Resource:
+                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
+              - Effect: 'Allow'
+                Action:
+                  - 'ecs:UpdateService'
+                  - 'ecs:RegisterTaskDefinition'
+                Resource: '*'
               - Effect: 'Allow'
                 Action:
                   - 'secretsmanager:GetSecretValue'

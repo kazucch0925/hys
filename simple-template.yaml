@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: >-
-  This template creates a CodePipeline pipeline with a source stage
-  (CodeCommit), a build stage (CodeBuild), and a deploy stage (ECS).
+Description: This template creates a CodePipeline pipeline with a source stage (CodeCommit), a build stage (CodeBuild), and a deploy stage (ECS).
 
 Parameters:
   AccountID:
@@ -9,13 +7,11 @@ Parameters:
     Description: "AWS Account ID"
 
 Resources:
-  # S3バケットの作成
   ArtifactBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
       BucketName: 'codepipeline-ap-northeast-1-artifacts'
 
-  # CodePipeline IAM Role
   CodePipelineRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -33,11 +29,10 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: 'Allow'
-                Action:
-                  - 'iam:PassRole'
+                Action: 'iam:PassRole'
                 Resource: '*'
               - Effect: 'Allow'
-                Action:
+                Action: 
                   - 'codebuild:StartBuild'
                   - 'codebuild:BatchGetBuilds'
                   - 'codebuild:BatchGetBuildBatches'
@@ -47,38 +42,10 @@ Resources:
                 Action: 'codestar-connections:UseConnection'
                 Resource: '*'
               - Effect: 'Allow'
-                Action:
+                Action: 
                   - 'ecs:UpdateService'
                   - 'ecs:RegisterTaskDefinition'
                 Resource: '*'
-              - Effect: 'Allow'
-                Action:
-                  - 's3:GetObject'
-                  - 's3:PutObject'
-                  - 's3:ListBucket'
-                Resource: 
-                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-artifacts'
-                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-artifacts/*'
-              - Effect: 'Allow'
-                Action:
-                  - 'codecommit:ListRepositories'
-                  - 'codecommit:GetBranch'
-                  - 'codecommit:GetCommit'
-                  - 'codecommit:GetRepository'
-                  - 'codecommit:GitPull'
-                  - 'codecommit:UploadArchive'
-                  - 'codecommit:CancelUploadArchive'
-                  - 'codecommit:CompleteUploadArchive'
-                  - 'codecommit:GetUploadArchiveStatus'
-                Resource: 
-                  - !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
-              - Effect: 'Allow'
-                Action:
-                  - 'secretsmanager:GetSecretValue'
-                  - 'secretsmanager:DescribeSecret'
-                Resource: '*'
-
-  # CodeBuild IAM Role
   CodeBuildRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -98,13 +65,10 @@ Resources:
               - Effect: 'Allow'
                 Resource: 
                   - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*'
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*:*'
                 Action: 
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-                  - 'logs:DescribeLogStreams'
-                  - 'logs:GetLogEvents'
               - Effect: 'Allow'
                 Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
                 Action: 
@@ -123,12 +87,13 @@ Resources:
                 Resource: 
                   - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/*'
               - Effect: 'Allow'
-                Action:
-                  - 'codecommit:ListRepositories'
-                  - 'codecommit:GetBranch'
+                Action: 
+                  - 'codecommit:GitPull'
                   - 'codecommit:GetCommit'
                   - 'codecommit:GetRepository'
-                  - 'codecommit:GitPull'
+                  - 'codecommit:UploadArchive'
+                  - 'codecommit:CancelUploadArchive'
+                  - 'codecommit:CompleteUploadArchive'
                 Resource: 
                   - !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
               - Effect: 'Allow'
@@ -136,33 +101,33 @@ Resources:
                   - 'secretsmanager:GetSecretValue'
                   - 'secretsmanager:DescribeSecret'
                 Resource: 
-                  - 'arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test-E5CTpe'
-
-  # CodeBuildプロジェクトの定義
+                  - !Sub 'arn:aws:secretsmanager:ap-northeast-1:${AccountID}:secret:flask_ecs_test-E5CTpe'
+                
   CodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties: 
-      Name: 'cloudformation_sample'
+      Name: !Sub ${AWS::StackName}-build
       Source: 
-        Type: 'CODEPIPELINE'
+        Type: CODECOMMIT
+        Location: !Sub https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/my-todo-app-repo
       Artifacts: 
-        Type: 'CODEPIPELINE'
+        Type: CODEPIPELINE
       Environment: 
-        ComputeType: 'BUILD_GENERAL1_SMALL'
-        Image: 'aws/codebuild/standard:4.0'
-        Type: 'LINUX_CONTAINER'
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
-          - Name: GITHUB_TOKEN
-            Type: SECRETS_MANAGER
-            ValueFrom: 'arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test-E5CTpe'
+          - Name: DOCKERHUB_USER
+            Value: "DOCKERHUB_USERNAME"
+          - Name: DOCKERHUB_PASS
+            Value: "DOCKERHUB_PASSWORD"
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Description: 'CodeBuild project for building the application'
 
   MyPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
       Name: 'pipeline_sample'
-      RoleArn: !GetAtt [CodePipelineRole, Arn]
+      RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
@@ -178,8 +143,8 @@ Resources:
               OutputArtifacts:
                 - Name: SourceArtifact
               Configuration:
-                RepositoryName: 'my-todo-app-repo'
-                BranchName: 'master'
+                RepositoryName: my-todo-app-repo
+                BranchName: master
               RunOrder: 1
         - Name: Build
           Actions:
@@ -194,7 +159,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildArtifact
               Configuration:
-                ProjectName: 'cloudformation_sample'
+                ProjectName: !Ref CodeBuildProject
               RunOrder: 1
         - Name: Deploy
           Actions:

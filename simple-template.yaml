@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template creates a CodePipeline pipeline with a source stage (CodeCommit), a build stage (CodeBuild), and a deploy stage (ECS).
+Description: >
+  This template creates a CodePipeline pipeline with a source stage (CodeCommit), a build stage (CodeBuild), and a deploy stage (ECS).
 
 Parameters:
   AccountID:
@@ -46,6 +47,12 @@ Resources:
                   - 'ecs:UpdateService'
                   - 'ecs:RegisterTaskDefinition'
                 Resource: '*'
+              - Effect: 'Allow'
+                Action:
+                  - 's3:*'
+                Resource:
+                  - !Sub 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
+
   CodeBuildRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -64,36 +71,38 @@ Resources:
             Statement:
               - Effect: 'Allow'
                 Resource: 
-                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/*'
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test'
+                  - !Sub 'arn:aws:logs:ap-northeast-1:${AccountID}:log-group:/aws/codebuild/flask_ecs_test:*'
                 Action: 
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
               - Effect: 'Allow'
-                Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
-                Action: 
-                  - 's3:PutObject'
-                  - 's3:GetObject'
-                  - 's3:GetObjectVersion'
-                  - 's3:GetBucketAcl'
-                  - 's3:GetBucketLocation'
-              - Effect: 'Allow'
+                Resource: 
+                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/flask_ecs_test-*'
                 Action: 
                   - 'codebuild:CreateReportGroup'
                   - 'codebuild:CreateReport'
                   - 'codebuild:UpdateReport'
                   - 'codebuild:BatchPutTestCases'
                   - 'codebuild:BatchPutCodeCoverages'
-                Resource: 
-                  - !Sub 'arn:aws:codebuild:ap-northeast-1:${AccountID}:report-group/*'
               - Effect: 'Allow'
                 Action: 
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+                Resource: 'arn:aws:s3:::codepipeline-ap-northeast-1-*'
+              - Effect: 'Allow'
+                Action:
                   - 'codecommit:GitPull'
-                  - 'codecommit:GetCommit'
                   - 'codecommit:GetRepository'
+                  - 'codecommit:GetBranch'
                   - 'codecommit:UploadArchive'
                   - 'codecommit:CancelUploadArchive'
                   - 'codecommit:CompleteUploadArchive'
+                  - 'codecommit:GetUploadArchiveStatus'
                 Resource: 
                   - !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
               - Effect: 'Allow'
@@ -101,33 +110,13 @@ Resources:
                   - 'secretsmanager:GetSecretValue'
                   - 'secretsmanager:DescribeSecret'
                 Resource: 
-                  - !Sub 'arn:aws:secretsmanager:ap-northeast-1:${AccountID}:secret:flask_ecs_test-E5CTpe'
-                
-  CodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
-    Properties: 
-      Name: !Sub ${AWS::StackName}-build
-      Source: 
-        Type: CODECOMMIT
-        Location: !Sub https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/my-todo-app-repo
-      Artifacts: 
-        Type: CODEPIPELINE
-      Environment: 
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:4.0
-        EnvironmentVariables:
-          - Name: DOCKERHUB_USER
-            ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test:username::"
-          - Name: DOCKERHUB_PASS
-            ValueFrom: "arn:aws:secretsmanager:ap-northeast-1:381491863936:secret:flask_ecs_test:password::"
-      ServiceRole: !GetAtt CodeBuildRole.Arn
+                  - !Sub 'arn:aws:secretsmanager:ap-northeast-1:${AccountID}:secret:flask_ecs_test'
 
   MyPipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
       Name: 'pipeline_sample'
-      RoleArn: !GetAtt CodePipelineRole.Arn
+      RoleArn: !GetAtt [CodePipelineRole, Arn]
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
@@ -143,8 +132,8 @@ Resources:
               OutputArtifacts:
                 - Name: SourceArtifact
               Configuration:
-                RepositoryName: my-todo-app-repo
-                BranchName: master
+                RepositoryName: 'my-todo-app-repo'
+                BranchName: 'master'
               RunOrder: 1
         - Name: Build
           Actions:
@@ -159,7 +148,7 @@ Resources:
               OutputArtifacts:
                 - Name: BuildArtifact
               Configuration:
-                ProjectName: !Ref CodeBuildProject
+                ProjectName: 'cloudformation_sample'
               RunOrder: 1
         - Name: Deploy
           Actions:

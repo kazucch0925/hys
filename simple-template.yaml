@@ -95,8 +95,11 @@ Resources:
                 Resource: '*'
               - Effect: 'Allow'
                 Action:
+                  - 'secretsmanager:GetRandomPassword'
+                  - 'secretsmanager:GetResourcePolicy'
                   - 'secretsmanager:GetSecretValue'
                   - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
                   - 'cloudformation:*'
                 Resource: 
                   - !Sub 'arn:aws:secretsmanager:ap-northeast-1:${AccountID}:secret:flask_ecs_test'

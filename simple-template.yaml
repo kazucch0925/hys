@@ -57,6 +57,7 @@ Resources:
                   - 'codecommit:GitPull'
                   - 'codecommit:GetBranch'
                   - 'codecommit:GetCommit'
+                  - 'codecommit:UploadArchive'
                 Resource: !Sub 'arn:aws:codecommit:ap-northeast-1:${AccountID}:my-todo-app-repo'
 
   CodeBuildRole:

@@ -11,7 +11,7 @@ Resources:
   ArtifactBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: 'codepipeline-ap-northeast-1-artifacts'
+      BucketName: 'codepipeline-ap-northeast-1-artifacts-iac'
 
   CodePipelineRole:
     Type: 'AWS::IAM::Role'
@@ -44,8 +44,13 @@ Resources:
                 Resource: '*'
               - Effect: 'Allow'
                 Action: 
+                  - 'ecs:CreateService'
                   - 'ecs:UpdateService'
+                  - 'ecs:DeleteService'
                   - 'ecs:RegisterTaskDefinition'
+                  - 'ecs:DeregisterTaskDefinition'
+                  - 'ecs:DescribeServices'
+                  - 'ecs:DescribeTaskDefinition'
                 Resource: '*'
               - Effect: 'Allow'
                 Action:
@@ -279,3 +284,4 @@ Outputs:
   PipelineName:
     Description: "The name of the CodePipeline pipeline"
     Value: !Ref MyPipeline
+    
